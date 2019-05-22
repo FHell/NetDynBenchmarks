@@ -40,7 +40,7 @@ vertexes = [odevertex for v in vertices(g)]
 edgices = [staticedge for e in edges(g)]
 
 parameters = [kuramoto_parameters(10. * randn(), 0.) for v in vertices(g)]
-append!(parameters, [kuramoto_parameters(0.,  1. /100.) for v in edges(g)])
+append!(parameters, [kuramoto_parameters(0.,  1. /10.) for v in edges(g)])
 
 kuramoto_network! = network_dynamics(vertexes,edgices,g)
 
@@ -49,9 +49,9 @@ dx = similar(x0)
 
 kuramoto_network!(dx, x0, parameters, 0.)
 
-prob = ODEProblem(kuramoto_network!, x0, (0.,1000.), parameters)
+prob = ODEProblem(kuramoto_network!, x0, (0.,10.), parameters)
 
-sol = solve(prob,Rodas4(autodiff=false),abstol=1/10^14,reltol=1/10^14)
+sol = solve(prob,Rodas4(autodiff=false),abstol=1/10^10,reltol=1/10^10)
 test_sol = TestSolution(sol)
 
 sol_lp = solve(prob,CVODE_BDF(),abstol=1/10^1,reltol=1/10^5)
