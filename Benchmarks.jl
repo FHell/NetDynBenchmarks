@@ -7,6 +7,7 @@ using LightGraphs
 using NetworkDynamics
 using DiffEqDevTools # for TestSolution
 
+
 function kuramoto_edge!(e,v_s,v_d,p,t)
     e[1] = sin(v_s[1] - v_d[1])
     nothing
