@@ -31,7 +31,7 @@ function kuramoto_vertex!(dv, v, e_s, e_d, p, t)
     nothing
 end
 
-g = barabasi_albert(20,5)
+g = barabasi_albert(100,5)
 
 odevertex = ODEVertex(f! = kuramoto_vertex!, dim = 1)
 staticedge = StaticEdge(f! = kuramoto_edge!, dim = 1)
@@ -40,7 +40,7 @@ vertexes = [odevertex for v in vertices(g)]
 edgices = [staticedge for e in edges(g)]
 
 parameters = [kuramoto_parameters(10. * randn(), 0.) for v in vertices(g)]
-append!(parameters, [kuramoto_parameters(0.,  1. /10.) for v in edges(g)])
+append!(parameters, [kuramoto_parameters(0.,  1. /100.) for v in edges(g)])
 
 kuramoto_network! = network_dynamics(vertexes,edgices,g)
 
@@ -49,15 +49,21 @@ dx = similar(x0)
 
 kuramoto_network!(dx, x0, parameters, 0.)
 
-prob = ODEProblem(kuramoto_network!, x0, (0.,10.), parameters)
+prob = ODEProblem(kuramoto_network!, x0, (0.,1000.), parameters)
+
+sol_lp = solve(prob,CVODE_BDF(),abstol=1/10^9,reltol=1/10^9)
+plot(sol_lp)
+
+function order_parameter(sol)
+    [abs(sum((exp.(im .* sol[:,i]))))/length(sol[:,i]) for i in 1:length(sol[1,:])]
+end
+plot(sol_lp.t ./100., order_parameter(sol_lp))
 
 sol = solve(prob,Rodas4(autodiff=false),abstol=1/10^10,reltol=1/10^10)
 test_sol = TestSolution(sol)
 
-sol_lp = solve(prob,CVODE_BDF(),abstol=1/10^1,reltol=1/10^5)
 
 plot(sol)
-plot(sol_lp)
 
 abstols = 1. /10 .^(5:8)
 reltols = 1. /10 .^(1:4);
