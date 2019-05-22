@@ -9,12 +9,13 @@ using DiffEqDevTools # for TestSolution
 
 
 function kuramoto_edge!(e,v_s,v_d,p,t)
-    e[1] = sin(v_s[1] - v_d[1])
+    e[1] = sin(v_s[1] - v_d[1]) * p.T_inv * t
     nothing
 end
 
 struct kuramoto_parameters
     ω
+    T_inv
 end
 
 function kuramoto_vertex!(dv, v, e_s, e_d, p, t)
@@ -38,8 +39,8 @@ staticedge = StaticEdge(f! = kuramoto_edge!, dim = 1)
 vertexes = [odevertex for v in vertices(g)]
 edgices = [staticedge for e in edges(g)]
 
-parameters = [kuramoto_parameters(10. * randn()) for v in vertices(g)]
-append!(parameters, [kuramoto_parameters(0.) for v in edges(g)])
+parameters = [kuramoto_parameters(10. * randn(), 0.) for v in vertices(g)]
+append!(parameters, [kuramoto_parameters(0.,  1. /100.) for v in edges(g)])
 
 kuramoto_network! = network_dynamics(vertexes,edgices,g)
 
@@ -48,12 +49,15 @@ dx = similar(x0)
 
 kuramoto_network!(dx, x0, parameters, 0.)
 
-prob = ODEProblem(kuramoto_network!, x0, (0.,5.), parameters)
+prob = ODEProblem(kuramoto_network!, x0, (0.,1000.), parameters)
 
 sol = solve(prob,Rodas4(autodiff=false),abstol=1/10^14,reltol=1/10^14)
 test_sol = TestSolution(sol)
 
+sol_lp = solve(prob,CVODE_BDF(),abstol=1/10^1,reltol=1/10^5)
+
 plot(sol)
+plot(sol_lp)
 
 abstols = 1. /10 .^(5:8)
 reltols = 1. /10 .^(1:4);
